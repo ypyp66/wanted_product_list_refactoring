@@ -16,9 +16,9 @@ const RecentButton = styled(Button)``;
 const PriceASCButton = styled(Button)``;
 class SortFilter extends Component {
   handleClick = e => {
-    const { handleSortChange, closeModal } = this.props;
+    const { handleSortChange, toggleModal } = this.props;
     handleSortChange(e.target.value);
-    closeModal();
+    toggleModal();
   };
   render() {
     return (

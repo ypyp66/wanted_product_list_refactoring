@@ -9,7 +9,7 @@ export default class Modal extends Component {
   }
   handleClick = e => {
     if (e.target === this.modalRef.current) {
-      this.props.closeModal();
+      this.props.toggleModal();
     }
   };
   render() {

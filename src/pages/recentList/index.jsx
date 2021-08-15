@@ -1,18 +1,18 @@
 import React, { Component } from 'react';
 import CardList from 'components/CardList/index';
 import PageTitle from 'components/Text/pageTitle';
-import Button from 'components/Button/index';
 import LinkButton from 'components/LinkButton/index';
 import BrandLists from 'components/BrandLists/index';
-import HideCheckBox from 'components/HideCheckBox/index';
 import SortFilter from 'components/SortFilter';
+import FilterLists from 'components/FilterLists';
 import Modal from 'Modals';
 import * as LSWorker from 'services/localStorageWorker';
 import { sortProductByKey } from 'services/sortProductByKey.js';
 import ROUTES from 'constants/routesPath.js';
 import PAGE_TITLE from 'constants/pageTitle.js';
 import SORT_KEY from 'constants/sortKey.js';
-import * as Styles from './styles';
+import { RecentListContainer, HeaderContainer } from './styles';
+import ModalPortal from 'Modals/ModalPortal';
 
 class RecentList extends Component {
   _isMounted = false;
@@ -49,13 +49,14 @@ class RecentList extends Component {
     this.setState({ sortKey });
   };
 
-  handleCloseModal = () => {
-    this.setState({ isModalShow: false });
+  toggleModal = () => {
+    this.setState({ isModalShow: !this.state.isModalShow });
   };
 
   setSelectedBrands = name => {
     const { selectedBrands } = this.state;
     let newSelectedBrands;
+
     if (name === 'all') {
       newSelectedBrands = [];
     } else if (!selectedBrands.includes(name)) {
@@ -63,49 +64,43 @@ class RecentList extends Component {
     } else {
       newSelectedBrands = selectedBrands.filter(brand => brand !== name);
     }
+
     this.setState({ selectedBrands: newSelectedBrands });
   };
 
   filterProducts = () => {
     const { products, isChecked, sortKey, selectedBrands } = this.state;
     const notInterested = LSWorker.getNotInterested();
-    return sortProductByKey(
-      products
-        .filter(product =>
-          !isChecked ? product : !notInterested.includes(product.id),
-        )
-        .filter(product =>
-          !selectedBrands.length
-            ? product
-            : selectedBrands.includes(product.brand),
-        ),
-      sortKey,
-    );
+    const _products = products
+      .filter(product =>
+        !isChecked ? product : !notInterested.includes(product.id),
+      )
+      .filter(product =>
+        !selectedBrands.length
+          ? product
+          : selectedBrands.includes(product.brand),
+      );
+
+    return sortProductByKey(_products, sortKey);
   };
 
   render() {
-    const { isChecked, brandClick, selectedBrands, sortKey } = this.state;
+    const { isChecked, brandClick, selectedBrands, sortKey, isModalShow } =
+      this.state;
     const products = this.filterProducts();
 
     return (
-      <Styles.RecentListContainer>
-        <Styles.HeaderContainer>
+      <RecentListContainer>
+        <HeaderContainer>
           <PageTitle title={PAGE_TITLE.RECENT_LIST} />
-        </Styles.HeaderContainer>
-        <Styles.FilterContainer>
-          <Styles.CustomButton onClick={this.toggleBrandLists}>
-            브랜드
-          </Styles.CustomButton>
-          <div>
-            <HideCheckBox
-              isChecked={isChecked}
-              handleHideExceptItems={this.handleHideExceptItems}
-            />
-            <Button onClick={() => this.setState({ isModalShow: true })}>
-              {sortKey === SORT_KEY.RECENT ? '최근 조회 순' : '낮은 가격 순'}
-            </Button>
-          </div>
-        </Styles.FilterContainer>
+        </HeaderContainer>
+        <FilterLists
+          isChecked={isChecked}
+          sortKey={sortKey}
+          toggleBrandLists={this.toggleBrandLists}
+          handleHideExceptItems={this.handleHideExceptItems}
+          toggleModal={this.toggleModal}
+        />
         <BrandLists
           brandClick={brandClick}
           setSelectedBrands={this.setSelectedBrands}
@@ -113,13 +108,17 @@ class RecentList extends Component {
         />
         <CardList cards={products} />
         <LinkButton title={PAGE_TITLE.HOME} to={ROUTES.HOME} />
-        <Modal show={this.state.isModalShow} closeModal={this.handleCloseModal}>
-          <SortFilter
-            handleSortChange={this.handleSortChange}
-            closeModal={this.handleCloseModal}
-          />
-        </Modal>
-      </Styles.RecentListContainer>
+        {isModalShow && (
+          <ModalPortal>
+            <Modal show={isModalShow} toggleModal={this.toggleModal}>
+              <SortFilter
+                handleSortChange={this.handleSortChange}
+                toggleModal={this.toggleModal}
+              />
+            </Modal>
+          </ModalPortal>
+        )}
+      </RecentListContainer>
     );
   }
 }
